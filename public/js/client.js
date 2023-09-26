@@ -1,11 +1,11 @@
-import { getCookie } from './cookie.js';
+import { getCookie, setCookie, deleteCookie } from './cookie.js';
 var socket = io();
 
 // DOM elements
 var createButton = document.getElementById('create');
 var joinRoom = document.getElementById('joinRoom');
 var joinButton = document.getElementById('join');
-var id = getCookie('idRoom');
+var idTemp = getCookie('idTemp');
 var username = document.getElementById('username');
 
 var body = document.body;
@@ -13,12 +13,17 @@ var body = document.body;
 // Event listeners
 if(createButton)
     createButton.addEventListener('click', function(){
-        socket.emit('connect to game', id);
+        console.log(idTemp);
+        setCookie('idRoom', idTemp, 1);
+        deleteCookie('idTemp');
+        socket.emit('connect to game', idTemp);
 });
 
 if(joinRoom) {
     joinRoom.addEventListener('click', function(){
-        id = document.getElementById('idRoomJoin').value;
+        var id = document.getElementById('idRoomJoin').value;
+        deleteCookie('idTemp');
+        setCookie('idRoom', id, 1);
         socket.emit('connect to game', id);
     });
 }

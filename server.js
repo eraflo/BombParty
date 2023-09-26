@@ -30,13 +30,15 @@ io.on('connection', function(socket){
     socket.on('connect to game', function(id){
         // redirection du socket concerné vers la room
         socket.join(id);
-        socket.to(id).emit('redirect', '/game.html?id=' + id);
+        io.to(id).emit('redirect', '/game.html?id=' + id);
     });
 
     socket.on('join the game', function(username){
         var player = new Player(username, socket.id);
         socket.username = Player.username;
         users.push(player);
+        console.log(socket.rooms);
+        console.log(users);
         io.emit('update users', users);
     });
 
@@ -44,6 +46,7 @@ io.on('connection', function(socket){
     socket.on('disconnect', function(data){
         connections.splice(connections.indexOf(socket), 1);
         users.splice(users.indexOf(socket.username), 1);
+        socket.leave(socket.id);
         console.log('Disconnected: %s sockets connected', connections.length);
     });
 });

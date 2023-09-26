@@ -18,6 +18,6 @@ if(lettersDiv) {
 }
 
 if(document.getElementById("idRoom")) {
-    setCookie('idRoom', createIdRoom(), 1);
-    document.getElementById("idRoom").innerHTML = getCookie('idRoom');
+    setCookie('idTemp', createIdRoom(), 1);
+    document.getElementById("idRoom").innerHTML = getCookie('idTemp');
 }
