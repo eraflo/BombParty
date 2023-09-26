@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel= stylesheet href="./css/style.css">
+
+</head>
+<body>
+    <div id="create-room">
+        <h1>Create a room</h1>
+        <p> Id : <span id="idRoom"></span></p>
+        <button id="create">Create</button>
+    </div>
+    <div id="join-room">
+        <h1>Join a room</h1>
+        <input type="text" id="idRoomJoin" placeholder="id room">
+        <button id="joinRoom">Join</button>
+    </div>
+    <footer>
+        <script src="/socket.io/socket.io.js"></script>
+        <script type="module" src="./js/client.js"></script>
+        <script type="module" src="./js/main.js"></script>
+    </footer>
+</body>
+</html>

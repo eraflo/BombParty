@@ -1,0 +1,20 @@
+body {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+#Letters h1 {
+    color: white;
+    text-align: center;
+    font-size: 2em;
+    margin-top: 5%;
+}
+
+#lettersDiv {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 2em;
+    color: white;
+    font-size: 1.5em;
+}
