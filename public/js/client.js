@@ -1,4 +1,5 @@
 import { getCookie, setCookie, deleteCookie } from './cookie.js';
+import pickLetters from './lettersPicker.js';
 var socket = io();
 
 // DOM elements
@@ -53,18 +54,47 @@ socket.on('redirect', function(destination) {
 });
 
 socket.on('update users', function(users) {
-    console.log(users);
+    let players = document.getElementById('players');
+    players.innerHTML = '<h1>Players</h1>';
+    for(let i = 0; i < users.length; i++) {
+        players.innerHTML += '<p>' + users[i].username + '</p>';
+    }
 });
 
 socket.on('remove begin button', function() {
     document.getElementById('begin').remove();
 });
 
-socket.on('show letters', function() {
+socket.on('generate letters', function() {
+    let letters = "";
+
+    for (let i = 0; i < 3; i++) {
+        letters += pickLetters("fr");
+    }
+    
+    if(letters != "") {
+        socket.emit('letters generated', letters);
+    }
+    
+});
+
+socket.on('show letters', function(letters) {
+    console.log(letters);
+    // Création de la section des lettres
     document.getElementById('game').innerHTML += '<section id="Letters"><h1>Letters</h1><div id="lettersDiv"></div></section>';
+    
+    // Création des divs pour les lettres
+    let lettersDiv = document.getElementById("lettersDiv");
+    let letterDiv = document.createElement('div');
+    letterDiv.classList.add('letter');
+
+    // Ajout des lettres dans le DOM
+    letterDiv.textContent = letters;
+    lettersDiv.appendChild(letterDiv);
 });
 
 socket.on('your turn', function(username) {
+        console.log('your turn');
         document.getElementById('game').innerHTML += '<section id="turn"><h1>' + username + ' turn</h1></section>';
 
         // Formulaire de saisie des mots

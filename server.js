@@ -1,3 +1,6 @@
+const Game = require('./game.js');
+const Player = require('./player.js');
+
 var express = require('express');
 var app = express();
 var http = require('http').Server(app);
@@ -7,49 +10,23 @@ var connections = [];
 
 let rooms = [];
 
-class Player {
-    constructor(username, socket){
-        this.username = username;
-        this.socket = socket.id;
-        this.lives = 2;
-    }
-}
-
-class Game {
-    constructor(idRoom){
-        this.idRoom = idRoom;
-        this.players = [];
-        this.idPlayerToPlay = 0;
-        this.playerToPlay = null;
-    }
-
-    addPlayer(player){
-        this.players.push(player);
-    }
-
-    removePlayer(player){
-        this.players.splice(this.players.indexOf(player), 1);
-    }
-
-    nextTurn(){
-        this.idPlayerToPlay++;
-        this.idPlayerToPlay = this.idPlayerToPlay%this.players.length;
-        this.playerToPlay = this.players[this.idPlayerToPlay];
-    }
-
-    begin(){
-        // Assigne un joueur au hasard pour commencer
-        this.idPlayerToPlay = Math.floor(Math.random() * this.players.length);
-        this.playerToPlay = this.players[this.idPlayerToPlay];
-    }
-}
-
 function getRoom(id){
     for(let i = 0; i < rooms.length; i++){
         if(rooms[i].id == id){
             return rooms[i];
         }
     }
+}
+
+function getGame(id){
+    let game = null;
+    if(getRoom(id)){
+        game = getRoom(id).game;
+    }
+    else {
+        return;
+    }
+    return game;
 }
 
 
@@ -77,38 +54,32 @@ io.on('connection', function(socket){
             rooms.push({id: id, game: new Game(id)});
             socket.join(id);
         }
-        console.log(socket);
         io.to(id).emit('redirect', '/game.html?id=' + id);
     });
 
     // Rejoindre la room
     socket.on('join the game', function(username, id){
         
+        // Réajoute le joueur dans la room
+        socket.join(id);
+
         // ajout du joueur dans la game de la room
-        let game = null;
-        if(getRoom(id)){
-            game = getRoom(id).game;
+        let game = getGame(id);
+
+        if(game != null){
+            let player = game.addPlayer(new Player(username, socket));
+            socket.username = Player.username;
+            io.to(game.idRoom).emit('update users', game.players);
         }
         else {
-            socket.emit('redirect', '/');
-            return;
+            // redirection vers la page d'accueil
+            io.to(socket.id).emit('redirect', '/');
         }
-
-        let player = game.addPlayer(new Player(username, socket));
-        socket.username = Player.username;
-        io.to(game.idRoom).emit('update users', game.players);
     });
 
     // Commencer la partie
     socket.on('begin', function(id){
-        let game = null;
-        if(getRoom(id)){
-            game = getRoom(id).game;
-        }
-        else {
-            socket.emit('redirect', '/');
-            return;
-        }
+        let game = getGame(id);
 
         // Commencer la partie
         game.begin();
@@ -118,14 +89,24 @@ io.on('connection', function(socket){
         // Enlever le bouton begin
         io.to(game.idRoom).emit('remove begin button');
 
-        // Afficher les lettres à tous les joueurs
-        io.to(game.idRoom).emit('show letters');
+        // Génère les lettres
+        io.to(game.playerToPlay.socket).emit('generate letters');
 
-        // Envoie à un joueur qu'il doit jouer
-        io.to(game.playerToPlay.socket).emit('your turn', game.playerToPlay.username);
+        socket.on('letters generated', function(){
+            console.log('letters generated');
+            // Ajoute les lettres à la game
+            // game.addLetters(letters);
+
+            // // Envoie les lettres à tous les joueurs
+            io.to(game.idRoom).emit('show letters', letters);
+
+            // // Envoie à un joueur qu'il doit jouer
+            // io.to(game.playerToPlay.socket).emit('your turn', game.playerToPlay.username);
+        });
+
 
         // Reçoit le mot du joueur
-        socket.on('word', function(word, id){
+        io.on('word', function(word, id){
             // Vérifie si le mot est valide
             if(word.length < 3){
                 io.to(game.playerToPlay.socket).emit('invalid word', word);
@@ -134,18 +115,20 @@ io.on('connection', function(socket){
                 // Vérifie si le mot est dans le dictionnaire
                 let validWord = true;
                 // Si oui, envoie le mot à tous les joueurs 
-                if(!validWord){
-                    if(game.playerToPlay.lives > 0){
-                        game.playerToPlay.lives--;
-                    }
-                    else {
-                        io.to(game.playerToPlay.socket).emit('lose');
-                        game.removePlayer(game.playerToPlay);
-                    }
+                if(validWord){
+                    game.nextTurn();
+                    game.removeLetters();
+                    //io.to(game.playerToPlay.socket).emit('valid word', word);
+                    io.to(game.playerToPlay.socket).emit('your turn', game.playerToPlay.username);  
                 }
-                game.nextTurn();
-                io.to(game.playerToPlay.socket).emit('your turn', game.playerToPlay.username);               
+                             
             }
+        });
+
+        // Deconnexion
+        socket.on('disconnect', function(){
+            game.removePlayer(game.getPlayerWithSocket(socket));
+            io.to(game.idRoom).emit('update users', game.players);
         });
     });
 
