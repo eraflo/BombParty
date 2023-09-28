@@ -1,13 +1,14 @@
-const Game = require('./game.js');
-const Player = require('./player.js');
+const Game = require('./server/js/game.js');
+const Player = require('./server/js/player.js');
+const Bomb = require('./server/js/bomb.js');
 
 var express = require('express');
 var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
+const debug = require('debug')('app:server');
 
-var connections = [];
-
+let connections = [];
 let rooms = [];
 
 function getRoom(id){
@@ -29,7 +30,6 @@ function getGame(id){
     return game;
 }
 
-
 // Static files
 app.use(express.static('public'));
 
@@ -47,26 +47,26 @@ io.on('connection', function(socket){
     // Création de la room
     socket.on('connect to game', function(id){
         // redirection du socket concerné vers la room
-        if(getRoom(id)){
-            socket.join(id);
+        if(!getRoom(id)){
+            rooms.push({id: id, game: new Game(id, new Bomb())});
         }
-        else {
-            rooms.push({id: id, game: new Game(id)});
-            socket.join(id);
-        }
-        io.to(id).emit('redirect', '/game.html?id=' + id);
+
+        io.to(socket.id).emit('redirect', '/game.html?id=' + id);
     });
 
     // Rejoindre la room
     socket.on('join the game', function(username, id){
-        
-        // Réajoute le joueur dans la room
-        socket.join(id);
-
-        // ajout du joueur dans la game de la room
+        // Récupère la game de la room
         let game = getGame(id);
+        
+        // ajout du joueur dans la game de la room
+        if(game != null && !game.hasBegun){
+            
+            // Réajoute le joueur dans la room
+            socket.leaveAll();
+            socket.join(id);
 
-        if(game != null){
+            // Crée le player et l'ajoute
             let player = game.addPlayer(new Player(username, socket));
             socket.username = Player.username;
             io.to(game.idRoom).emit('update users', game.players);
@@ -79,66 +79,82 @@ io.on('connection', function(socket){
 
     // Commencer la partie
     socket.on('begin', function(id){
+        // Récupère la game de la room
         let game = getGame(id);
 
         // Commencer la partie
-        game.begin();
-
-        console.log(game);
+        if(!game.begin()) {
+            return;
+        }
 
         // Enlever le bouton begin
         io.to(game.idRoom).emit('remove begin button');
 
-        // Génère les lettres
-        io.to(game.playerToPlay.socket).emit('generate letters');
+        // Ajoute les lettres à la game
+        game.addLetters();
 
-        socket.on('letters generated', function(){
-            console.log('letters generated');
-            // Ajoute les lettres à la game
-            // game.addLetters(letters);
+        // // Envoie les lettres à tous les joueurs
+        io.to(game.idRoom).emit('show letters', game.letters);
 
-            // // Envoie les lettres à tous les joueurs
-            io.to(game.idRoom).emit('show letters', letters);
+        // // Envoie à un joueur qu'il doit jouer
+        io.to(game.idRoom).emit('play', game.playerToPlay.socket, game.playerToPlay.username);
 
-            // // Envoie à un joueur qu'il doit jouer
-            // io.to(game.playerToPlay.socket).emit('your turn', game.playerToPlay.username);
-        });
-
-
-        // Reçoit le mot du joueur
-        io.on('word', function(word, id){
-            // Vérifie si le mot est valide
-            if(word.length < 3){
-                io.to(game.playerToPlay.socket).emit('invalid word', word);
-            }
-            else {
-                // Vérifie si le mot est dans le dictionnaire
-                let validWord = true;
-                // Si oui, envoie le mot à tous les joueurs 
-                if(validWord){
-                    game.nextTurn();
-                    game.removeLetters();
-                    //io.to(game.playerToPlay.socket).emit('valid word', word);
-                    io.to(game.playerToPlay.socket).emit('your turn', game.playerToPlay.username);  
-                }
-                             
-            }
-        });
-
-        // Deconnexion
-        socket.on('disconnect', function(){
-            game.removePlayer(game.getPlayerWithSocket(socket));
-            io.to(game.idRoom).emit('update users', game.players);
-        });
+        // Init temps aléatoire bomb
+        game.bomb.initTime(io, game);
     });
 
+    // Reçoit le mot du joueur
+    socket.on('word', function(word, id){
+        // Récupère la game de la room
+        let game = getGame(id);
 
 
+        // Vérifie si le mot est valide
+        if(word.length < 3){
+            io.to(id).emit('invalid word', word, game.playerToPlay.socket);
+        }
+        else {
+            // Vérifie si le mot est dans le dictionnaire
+            let valid = game.verifyWord(word);
+
+            console.log(valid);
+
+            // Si oui, envoie le mot à tous les joueurs 
+            if(valid){
+                game.nextTurn(io);
+                game.removeLetters();
+                game.addLetters();
+                game.bomb.increaseTime();
+                io.to(game.idRoom).emit('play', game.playerToPlay.socket, game.playerToPlay.username);
+            }
+                         
+        }
+    });
+
+   
     // Disconnect
     socket.on('disconnect', function(data){
+        if(rooms.length > 0){
+            rooms.forEach(element => {
+                if(element.game.players.length > 1){
+                    element.game.players.forEach(player => {
+                        if(player.socket == socket.id){
+                            if(element.game.players.length > 1){
+                                element.game.removePlayer(player);
+                                socket.leave(element.game.idRoom);
+                                socket.to(element.game.idRoom).emit('update users', element.game.players);
+                            } else {
+                                element.game = null;
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
         connections.splice(connections.indexOf(socket), 1);
         console.log('Disconnected: %s sockets connected', connections.length);
-    });
+    });        
 });
 
 http.listen(3000, function(){

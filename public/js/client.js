@@ -1,15 +1,14 @@
 import { getCookie, setCookie, deleteCookie } from './cookie.js';
-import pickLetters from './lettersPicker.js';
-var socket = io();
+let socket = io();
 
 // DOM elements
-var createButton = document.getElementById('create');
-var joinRoom = document.getElementById('joinRoom');
-var joinButton = document.getElementById('join');
-var idTemp = getCookie('idTemp');
-var username = document.getElementById('username');
+let createButton = document.getElementById('create');
+let joinRoom = document.getElementById('joinRoom');
+let joinButton = document.getElementById('join');
+let idTemp = getCookie('idTemp');
+let username = document.getElementById('username');
 
-var body = document.body;
+let body = document.body;
 
 // Event listeners
 
@@ -39,8 +38,8 @@ if(joinButton) {
         document.getElementById('usernames').remove();
 
         let game = document.getElementById('game');
-        document.getElementById('game').innerHTML = '<h1>Game</h1>';
-        document.getElementById('game').innerHTML += '<button id="begin">Begin</button>';
+        game.innerHTML = '<h1>Game</h1>';
+        game.innerHTML += '<button id="begin">Begin</button>';
         document.getElementById('begin').addEventListener('click', function(){
             socket.emit('begin', getCookie('idRoom'));
         });
@@ -65,47 +64,67 @@ socket.on('remove begin button', function() {
     document.getElementById('begin').remove();
 });
 
-socket.on('generate letters', function() {
-    let letters = "";
-
-    for (let i = 0; i < 3; i++) {
-        letters += pickLetters("fr");
-    }
-    
-    if(letters != "") {
-        socket.emit('letters generated', letters);
-    }
-    
-});
-
 socket.on('show letters', function(letters) {
-    console.log(letters);
     // Création de la section des lettres
-    document.getElementById('game').innerHTML += '<section id="Letters"><h1>Letters</h1><div id="lettersDiv"></div></section>';
+    if(document.getElementById('Letters') == null) {
+        document.getElementById('game').innerHTML += '<section id="Letters"><h1>Letters</h1><div id="lettersDiv"></div></section>';
     
-    // Création des divs pour les lettres
-    let lettersDiv = document.getElementById("lettersDiv");
-    let letterDiv = document.createElement('div');
-    letterDiv.classList.add('letter');
+        // Création des divs pour les lettres
+        let lettersDiv = document.getElementById("lettersDiv");
+        let letterDiv = document.createElement('div');
+        letterDiv.classList.add('letter');
 
-    // Ajout des lettres dans le DOM
-    letterDiv.textContent = letters;
-    lettersDiv.appendChild(letterDiv);
+        // Ajout des lettres dans le DOM
+        letterDiv.textContent = letters;
+        lettersDiv.appendChild(letterDiv);
+    } else {
+        // Ajout des lettres dans le DOM
+        document.querySelector(".letter").innerHTML = letters;
+    }
+    
 });
 
-socket.on('your turn', function(username) {
-        console.log('your turn');
-        document.getElementById('game').innerHTML += '<section id="turn"><h1>' + username + ' turn</h1></section>';
+socket.on('play', function(idSocket, username) {
 
-        // Formulaire de saisie des mots
-        document.getElementById('game').innerHTML += '<section id="words"><h1>Words</h1><form id="formWords"><input type="text" name="word" id="word"><input type="submit" value="Send"></form></section>';
-        document.getElementById('formWords').addEventListener('submit', function(e){
-            e.preventDefault();
+    document.getElementById('game').innerHTML += '<section id="turn"><h1>' + username + ' turn</h1></section>';
+    
+    if(idSocket == socket.id) {
+        // input pour saisir un mot avec les lettres
+        document.getElementById('game').innerHTML += '<section id="input"><h1>Enter your word</h1><input type="text" id="word"><button id="submit">Submit</button></section>';
+        document.getElementById('submit').addEventListener('click', function(){
             socket.emit('word', document.getElementById('word').value, getCookie('idRoom'));
         });
     }
-);
+});
 
-socket.on('invalid word', function(word) {
-    
+socket.on('invalid word', function(word, idSocket) {
+    if(idSocket == socket.id) {
+        console.log("Invalid word");
+    }
+});
+
+socket.on('end turn', function(socketPlayer) {
+    // enlève le html du joueur qui finit
+    if(socketPlayer == socket.id) {
+        document.getElementById('input').remove();
+    }
+    document.getElementById('turn').remove();
+
+});
+
+socket.on('end game', function() {
+    document.getElementById('game').innerHTML = '<h1>Game ended</h1>';
+
+    // Bouton rejouer
+    document.getElementById('game').innerHTML += '<button id="reset">Rejouer</button>';
+    document.getElementById('reset').addEventListener('click', function(){
+        // Enleve le bouton et le titre
+        document.getElementById('reset').remove();
+
+        // Rajoute le titre
+        let game = document.getElementById('game');
+        game.innerHTML = '<h1>Game</h1>';
+
+        socket.emit('begin', getCookie('idRoom'));
+    });
 });
