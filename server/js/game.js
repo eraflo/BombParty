@@ -1,25 +1,30 @@
 class Game {
     constructor(idRoom, bomb) {
+        // Infos room
         this.idRoom = idRoom;
 
+        // Infos game
         this.players = [];
         this.deadPlayers = [];
 
         this.idPlayerToPlay = 0;
         this.playerToPlay = null;
 
+        this.hasBegun = false;
+        this.nbTurnWithLetters = 1;
+        this.isDeadThisTurn = false;
+
+        // Infos lettres
         this.letters = "";
         this.fs = require('fs');
 
-        this.hasBegun = false;
         this.files = [
             {language: "fr", filepath: "./server/ods6.txt"}
         ];
         this.language = "fr";
 
+        // Infos bomb
         this.bomb = bomb;
-        this.nbTurnWithLetters = 1;
-        this.isDeadThisTurn = false;
     }
 
     addPlayer(player) {

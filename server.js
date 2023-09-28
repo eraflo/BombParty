@@ -50,7 +50,6 @@ io.on('connection', function(socket){
         if(!getRoom(id)){
             rooms.push({id: id, game: new Game(id, new Bomb())});
         }
-        
         io.to(socket.id).emit('redirect', '/game.html?id=' + id);
     });
 
@@ -66,10 +65,14 @@ io.on('connection', function(socket){
             socket.leaveAll();
             socket.join(game.idRoom);
 
-            // Crée le player et l'ajoute
-            let player = game.addPlayer(new Player(username, socket));
-            socket.username = player.username;
-            io.to(game.idRoom).emit('update users', game.players);
+            if(!game.isPlayerInGame(socket)) {
+                // Crée le player et l'ajoute
+                game.addPlayer(new Player(username, socket));
+                io.to(game.idRoom).emit('update users', game.players);
+
+                // Envoie l'id de la room aux joueurs
+                io.to(game.idRoom).emit('id', game.idRoom);
+            }
         }
         else {
             // redirection vers la page d'accueil
@@ -118,22 +121,20 @@ io.on('connection', function(socket){
     socket.on('disconnect', function(data){
         if(rooms.length > 0){
             rooms.forEach(element => {
-                if(element.game.players.length > 1){
-                    element.game.players.forEach(player => {
-                        if(player.socket == socket.id){
-                            if(element.game.players.length > 1){
-                                element.game.removePlayer(player);
-                                socket.leave(element.game.idRoom);
-                                socket.to(element.game.idRoom).emit('update users', element.game.players);
-                            } else {
-                                element.game = null;
-                            }
-                        }
-                    });
-                }
+
+                // Si un joueur se déconnecte, il est supprimé de la room
+                element.game.players.forEach(player => {
+                    if(player.socket == socket.id){
+                        element.game.removePlayer(player);
+                        socket.leave(element.game.idRoom);
+                        socket.to(element.game.idRoom).emit('update users', element.game.players);
+                    }
+                });
+
             });
         }
 
+        // Supprime le socket de la liste des sockets
         connections.splice(connections.indexOf(socket), 1);
         console.log('Disconnected: %s sockets connected', connections.length);
     });        
