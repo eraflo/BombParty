@@ -110,25 +110,7 @@ io.on('connection', function(socket){
 
 
         // Vérifie si le mot est valide
-        if(word.length < 3){
-            io.to(id).emit('invalid word', word, game.playerToPlay.socket);
-        }
-        else {
-            // Vérifie si le mot est dans le dictionnaire
-            let valid = game.verifyWord(word);
-
-            console.log(valid);
-
-            // Si oui, envoie le mot à tous les joueurs 
-            if(valid){
-                game.nextTurn(io);
-                game.removeLetters();
-                game.addLetters();
-                game.bomb.increaseTime();
-                io.to(game.idRoom).emit('play', game.playerToPlay.socket, game.playerToPlay.username);
-            }
-                         
-        }
+        game.checkWord(word, id, io);
     });
 
    
