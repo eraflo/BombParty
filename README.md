@@ -2,7 +2,7 @@
 
 ## Description
 
-Reproduction du jeu Bomb Party. Possibilité de faire des parties en parallèle.
+Reproduction du jeu Bomb Party. Possibilité de faire des parties en parallèle. Utilise le port 3000.
 
 ## Outils
 - [Node.js](https://nodejs.org/fr)
@@ -21,3 +21,4 @@ npm i
 
 - Lancement classique : ```npm run start```
 - Lancement debug : ```npm run debug```
+
