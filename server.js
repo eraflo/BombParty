@@ -50,7 +50,7 @@ io.on('connection', function(socket){
         if(!getRoom(id)){
             rooms.push({id: id, game: new Game(id, new Bomb())});
         }
-
+        
         io.to(socket.id).emit('redirect', '/game.html?id=' + id);
     });
 
@@ -64,11 +64,11 @@ io.on('connection', function(socket){
             
             // Réajoute le joueur dans la room
             socket.leaveAll();
-            socket.join(id);
+            socket.join(game.idRoom);
 
             // Crée le player et l'ajoute
             let player = game.addPlayer(new Player(username, socket));
-            socket.username = Player.username;
+            socket.username = player.username;
             io.to(game.idRoom).emit('update users', game.players);
         }
         else {

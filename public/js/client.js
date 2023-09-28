@@ -1,4 +1,4 @@
-import { getCookie, setCookie, deleteCookie } from './cookie.js';
+import { getCookie, setCookie, deleteCookie, getIdFromUrl } from './cookie.js';
 let socket = io();
 
 // DOM elements
@@ -15,7 +15,6 @@ let body = document.body;
 // Création room
 if(createButton)
     createButton.addEventListener('click', function(){
-        console.log(idTemp);
         setCookie('idRoom', idTemp, 1);
         deleteCookie('idTemp');
         socket.emit('connect to game', idTemp);
@@ -24,9 +23,8 @@ if(createButton)
 // Join room
 if(joinRoom) {
     joinRoom.addEventListener('click', function(){
-        var id = document.getElementById('idRoomJoin').value;
+        let id = document.getElementById('idRoomJoin').value;
         deleteCookie('idTemp');
-        setCookie('idRoom', id, 1);
         socket.emit('connect to game', id);
     });
 }
@@ -34,14 +32,15 @@ if(joinRoom) {
 // Join game
 if(joinButton) {
     joinButton.addEventListener('click', function(){
-        socket.emit('join the game', username.value, getCookie('idRoom'));
+        // récupérer l'id via l'url
+        socket.emit('join the game', username.value, getIdFromUrl());
         document.getElementById('usernames').remove();
 
         let game = document.getElementById('game');
         game.innerHTML = '<h1>Game</h1>';
         game.innerHTML += '<button id="begin">Begin</button>';
         document.getElementById('begin').addEventListener('click', function(){
-            socket.emit('begin', getCookie('idRoom'));
+            socket.emit('begin', getIdFromUrl());
         });
     });
 }
@@ -85,14 +84,14 @@ socket.on('show letters', function(letters) {
 });
 
 socket.on('play', function(idSocket, username) {
-
+    // Création de la section du tour
     document.getElementById('game').innerHTML += '<section id="turn"><h1>' + username + ' turn</h1></section>';
     
     if(idSocket == socket.id) {
         // input pour saisir un mot avec les lettres
         document.getElementById('game').innerHTML += '<section id="input"><h1>Enter your word</h1><input type="text" id="word"><button id="submit">Submit</button></section>';
         document.getElementById('submit').addEventListener('click', function(){
-            socket.emit('word', document.getElementById('word').value, getCookie('idRoom'));
+            socket.emit('word', document.getElementById('word').value, getIdFromUrl());
         });
     }
 });
@@ -125,6 +124,6 @@ socket.on('end game', function() {
         let game = document.getElementById('game');
         game.innerHTML = '<h1>Game</h1>';
 
-        socket.emit('begin', getCookie('idRoom'));
+        socket.emit('begin', getIdFromUrl());
     });
 });

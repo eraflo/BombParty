@@ -33,3 +33,8 @@ export const checkCookie = (cname) => {
 export const deleteCookie = (cname) => {
     document.cookie = cname + '=;expires=Thu, 01 Jan 1970 00:00:01 GMT;';
 }
+
+export const getIdFromUrl = () => {
+    let url = window.location.href;
+    return url.split('=')[1];
+}

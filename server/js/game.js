@@ -77,7 +77,6 @@ class Game {
         }
 
         // Change le joueur actuel
-        console.log(this.players);
         if(!this.isDeadThisTurn) {
             this.idPlayerToPlay++;
         }
