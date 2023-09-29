@@ -19,6 +19,7 @@ if (createButton)
     createButton.addEventListener('click', function () {
         deleteCookie('idTemp');
         socket.emit('connect to game', idTemp);
+        socket.emit('host', idTemp);
     });
 
 // Join room
@@ -43,13 +44,8 @@ if (joinButton) {
         let main = document.querySelector('#main');
         main.innerHTML = '<section id="players"></section><section id="game"></section>';
 
-
-        let game = document.querySelector('#game');
-        game.innerHTML = '<h1 class="title">' + titleText + '</h1>';
-        game.innerHTML += '<button id="begin">' + buttonText + '</button>';
-        document.querySelector('#begin').addEventListener('click', function () {
-            socket.emit('begin', getIdFromUrl());
-        });
+        // emit event pour savoir si est host
+        socket.emit('is host', getIdFromUrl());
     });
 }
 
@@ -58,6 +54,15 @@ socket.on('id', function (id) {
     if (!document.querySelector('#room').innerHTML.includes(id)) {
         document.querySelector('#room').innerHTML += id;
     }
+});
+
+socket.on('host', function () {
+    let game = document.querySelector('#game');
+    game.innerHTML = '<h1 class="title">' + titleText + '</h1>';
+    game.innerHTML += '<button id="begin">' + buttonText + '</button>';
+    document.querySelector('#begin').addEventListener('click', function () {
+        socket.emit('begin', getIdFromUrl());
+    });
 });
 
 socket.on('redirect', function (destination) {
@@ -116,7 +121,7 @@ socket.on('play', function (idSocket, username) {
             if (event.key == 'Enter') {
                 socket.emit('word', document.getElementById('word').value, getIdFromUrl());
             }
-            else if(event.key == 'Backspace') {
+            else if (event.key == 'Backspace') {
                 socket.emit('writing', getIdFromUrl(), document.querySelector('#write').value + '|');
             }
         });

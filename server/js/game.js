@@ -2,10 +2,12 @@ class Game {
     constructor(idRoom, bomb) {
         // Infos room
         this.idRoom = idRoom;
+        this.host = null;
 
         // Infos game
         this.players = [];
         this.deadPlayers = [];
+        this.wordsUsed = [];
 
         this.idPlayerToPlay = 0;
         this.playerToPlay = null;
@@ -111,7 +113,7 @@ class Game {
     pickLetters(array) {
         // Generate a random index to select a random string
         const randomStringIndex = Math.floor(Math.random() * array.length);
-        const randomString = array[randomStringIndex];
+        const randomString = array[randomStringIndex].trim();
 
         // Generate a random index to select a random position within the selected string
         const randomPosition = Math.floor(Math.random() * (randomString.length - 2));
@@ -142,7 +144,7 @@ class Game {
 
         for (let i = 0; i < content.length; i++) {
             let wordInDico = content[i].trim().toLowerCase();
-            if (word == wordInDico) {
+            if (word == wordInDico && !this.wordsUsed.includes(word)) {
                 return true;
             }
         }
@@ -160,6 +162,7 @@ class Game {
 
             // Si oui, envoie le mot à tous les joueurs 
             if (valid) {
+                this.wordsUsed.push(word);
                 this.nextTurn(io);
                 this.removeLetters();
                 this.addLetters();

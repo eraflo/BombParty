@@ -53,6 +53,18 @@ io.on('connection', function(socket){
         io.to(socket.id).emit('redirect', '/game.html?id=' + id);
     });
 
+    // Test si le joueur est host
+    socket.on('is host', function(id){
+        // Récupère la game de la room
+        let game = getGame(id);
+
+        // Test si le joueur est host
+        if(game != null && game.players.length == 1 && game.host == null){
+            game.host = socket.id;
+            io.to(game.idRoom).emit('host');
+        }
+    });
+
     // Rejoindre la room
     socket.on('join the game', function(username, id){
         // Récupère la game de la room
