@@ -90,6 +90,9 @@ io.on('connection', function(socket){
             return;
         }
 
+        // update users
+        io.to(game.idRoom).emit('update users', game.players);
+
         // Enlever le bouton begin
         io.to(game.idRoom).emit('remove begin button');
 

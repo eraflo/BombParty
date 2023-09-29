@@ -20,7 +20,7 @@ class Bomb {
     }
 
     increaseTime() {
-        this.time += 2;
+        this.time = this.time = Math.floor(Math.random() * 6) + 7;
     }
 }
 

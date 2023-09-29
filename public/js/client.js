@@ -69,7 +69,7 @@ socket.on('update users', function (users) {
     let players = document.querySelector('#players');
     players.innerHTML = '<h1>Players</h1>';
     for (let i = 0; i < users.length; i++) {
-        players.innerHTML += '<p>' + users[i].username + '</p>';
+        players.innerHTML += '<p>' + users[i].username + ' : ' + users[i].lives + ' lives</p>';
     }
 });
 
@@ -129,7 +129,6 @@ socket.on('play', function (idSocket, username) {
 
 // writing
 socket.on('writing', function (text) {
-    console.log(text);
     document.querySelector('#write').innerHTML = text;
 });
 

@@ -68,6 +68,9 @@ class Game {
             io.to(this.idRoom).emit('end turn', this.playerToPlay.socket);
         }
 
+        // update users
+        io.to(this.idRoom).emit('update users', this.players);
+
         // Vérifie qu'il n'y a pas de vainqueur
         if (this.players.length == 1) {
             this.end(io);
@@ -154,8 +157,6 @@ class Game {
         else {
             // Vérifie si le mot est dans le dictionnaire
             let valid = this.verifyWord(word);
-
-            console.log(valid);
 
             // Si oui, envoie le mot à tous les joueurs 
             if (valid) {
