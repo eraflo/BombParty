@@ -62,8 +62,11 @@ class Game {
     }
 
     nextTurn(io) {
-        // Fin du tour de l'ancien joueur
-        io.to(this.idRoom).emit('end turn', this.playerToPlay.socket);
+
+        if(this.playerToPlay != null) {
+            // Fin du tour de l'ancien joueur
+            io.to(this.idRoom).emit('end turn', this.playerToPlay.socket);
+        }
 
         // Vérifie qu'il n'y a pas de vainqueur
         if (this.players.length == 1) {
@@ -127,16 +130,16 @@ class Game {
     }
 
     verifyWord(word) {
-
-        if (!word.includes(this.letters)) {
+        if (!word.toLocaleLowerCase().includes(this.letters.toLocaleLowerCase())) {
             return false;
         }
 
         let content = this.getDico(this.language, this.files);
+        word = word.trim().toLowerCase();
 
-        let lines = content.split('\n');
-        for (let i = 0; i < lines.length; i++) {
-            if (word.toLowerCase() == lines[i].toLowerCase()) {
+        for (let i = 0; i < content.length; i++) {
+            let wordInDico = content[i].trim().toLowerCase();
+            if (word == wordInDico) {
                 return true;
             }
         }
@@ -160,6 +163,7 @@ class Game {
                 this.removeLetters();
                 this.addLetters();
                 this.bomb.increaseTime();
+                io.to(this.idRoom).emit('show letters', this.letters);
                 io.to(this.idRoom).emit('play', this.playerToPlay.socket, this.playerToPlay.username);
             }
 
@@ -167,19 +171,24 @@ class Game {
     }
 
     exploseBomb(io, game) {
-        // Enlève une vie au player dont c'est le tour
-        game.playerToPlay.loseLife();
 
-        // Vérifie status du player
-        if (game.playerToPlay.statut == 1) {
-            game.playerDied(game.playerToPlay.socket);
-            io.to(game.idRoom).emit('player died', game.playerToPlay.username);
+        if(game.playerToPlay != null) {
+
+            // Enlève une vie au player dont c'est le tour
+            game.playerToPlay.loseLife();
+
+            // Vérifie status du player
+            if (game.playerToPlay.statut == 1) {
+                game.playerDied(game.playerToPlay.socket);
+                io.to(game.idRoom).emit('player died', game.playerToPlay.username);
+            }
+            
         }
 
         // Change le joueur dont c'est le tour
         game.nextTurn(io);
 
-        if (game.hasBegun) {
+        if (game.hasBegun && game.playerToPlay.socket != null) {
             io.to(game.idRoom).emit('play', game.playerToPlay.socket, game.playerToPlay.username);
             game.bomb.initTime(io, game);
         }
@@ -214,7 +223,7 @@ class Game {
 
     end(io) {
         this.hasBegun = false;
-        io.to(this.idRoom).emit('end game');
+        io.to(this.idRoom).emit('end game', this.players[0].username);
     }
 }
 

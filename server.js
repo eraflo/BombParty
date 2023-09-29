@@ -116,6 +116,20 @@ io.on('connection', function(socket){
         game.checkWord(word, id, io);
     });
 
+    // Le joueur écrit 
+    socket.on('writing', function(id, text){
+        // Récupère la game de la room
+        let game = getGame(id);
+
+        if(text.includes('|')){
+            text = text.replace('|', '');
+            text = text.substring(0, text.length - 1);
+        }
+
+        // Envoie à tous les joueurs que le joueur écrit
+        io.to(game.idRoom).emit('writing', text);
+    });
+
    
     // Disconnect
     socket.on('disconnect', function(data){
@@ -126,6 +140,7 @@ io.on('connection', function(socket){
                 element.game.players.forEach(player => {
                     if(player.socket == socket.id){
                         element.game.removePlayer(player);
+                        element.game.nextTurn(io);
                         socket.leave(element.game.idRoom);
                         socket.to(element.game.idRoom).emit('update users', element.game.players);
                     }

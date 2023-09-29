@@ -9,6 +9,8 @@ let idTemp = getCookie('idTemp');
 let username = document.getElementById('username');
 
 let body = document.body;
+let buttonText = "Begin";
+let titleText = "Game";
 
 // Event listeners
 
@@ -36,15 +38,15 @@ if (joinButton) {
         document.getElementById('usernames').remove();
 
         let header = document.querySelector('header');
-        header.innerHTML = '<div id="left"><h1>CESI : Ca Explose Son Ingé</h1></div><div id="right"><h1 id="room">In room </h1></div>';
+        header.innerHTML = '<div id="left"><h1><span>C</span>a <span>E</span>xplose <span>S</span>on <span>I</span>ngé</h1><p>Un BombParty spécial CESI</div><div id="right"><h1 id="room">In room </h1></div>';
 
         let main = document.querySelector('#main');
         main.innerHTML = '<section id="players"></section><section id="game"></section>';
 
 
         let game = document.querySelector('#game');
-        game.innerHTML = '<h1>Game</h1>';
-        game.innerHTML += '<button id="begin">Begin</button>';
+        game.innerHTML = '<h1 class="title">' + titleText + '</h1>';
+        game.innerHTML += '<button id="begin">' + buttonText + '</button>';
         document.querySelector('#begin').addEventListener('click', function () {
             socket.emit('begin', getIdFromUrl());
         });
@@ -72,7 +74,11 @@ socket.on('update users', function (users) {
 });
 
 socket.on('remove begin button', function () {
+    document.querySelector('.title').remove();
     document.querySelector('#begin').remove();
+    if (document.querySelector('#reset') != null) {
+        document.querySelector('#reset').remove();
+    }
 });
 
 socket.on('show letters', function (letters) {
@@ -97,15 +103,34 @@ socket.on('show letters', function (letters) {
 
 socket.on('play', function (idSocket, username) {
     // Création de la section du tour
-    document.getElementById('game').innerHTML += '<section id="turn"><h1>' + username + ' turn</h1></section>';
+    document.getElementById('game').innerHTML += '<section id="turn"><h1 id="player-turn">' + username + ' turn :\t<span id="write"></span></h1></section>';
 
     if (idSocket == socket.id) {
         // input pour saisir un mot avec les lettres
-        document.getElementById('game').innerHTML += '<section id="input"><h1>Enter your word</h1><input type="text" id="word"><button id="submit">Submit</button></section>';
+        document.querySelector('#game').innerHTML += '<section id="input"><h1>Enter your word</h1><div class="form"><input type="text" id="word"><button id="submit">Submit</button></div></section>';
+        document.querySelector('#word').addEventListener('input', function () {
+            socket.emit('writing', getIdFromUrl(), document.querySelector('#word').value);
+        });
+
+        document.querySelector('#word').addEventListener('keydown', function (event) {
+            if (event.key == 'Enter') {
+                socket.emit('word', document.getElementById('word').value, getIdFromUrl());
+            }
+            else if(event.key == 'Backspace') {
+                socket.emit('writing', getIdFromUrl(), document.querySelector('#write').value + '|');
+            }
+        });
+
         document.getElementById('submit').addEventListener('click', function () {
             socket.emit('word', document.getElementById('word').value, getIdFromUrl());
         });
     }
+});
+
+// writing
+socket.on('writing', function (text) {
+    console.log(text);
+    document.querySelector('#write').innerHTML = text;
 });
 
 socket.on('invalid word', function (word, idSocket) {
@@ -117,25 +142,27 @@ socket.on('invalid word', function (word, idSocket) {
 socket.on('end turn', function (socketPlayer) {
     // enlève le html du joueur qui finit
     if (socketPlayer == socket.id) {
-        document.getElementById('input').remove();
+        document.querySelector('#input').remove();
     }
-    document.getElementById('turn').remove();
+    document.querySelector('#turn').remove();
 
 });
 
-socket.on('end game', function () {
-    document.getElementById('game').innerHTML = '<h1>Game ended</h1>';
+socket.on('end game', function (winner) {
+    // Affiche le gagnant
+    document.querySelector('#game').innerHTML += '<section id="winner"><h1>' + winner + ' win !</h1></section>';
 
-    // Bouton rejouer
-    document.getElementById('game').innerHTML += '<button id="reset">Rejouer</button>';
-    document.getElementById('reset').addEventListener('click', function () {
-        // Enleve le bouton et le titre
-        document.getElementById('reset').remove();
+    setTimeout(function () {
+        document.querySelector('#winner').remove();
+        document.getElementById('game').innerHTML = '<h1 class="title">' + titleText + '</h1>';
 
-        // Rajoute le titre
-        let game = document.getElementById('game');
-        game.innerHTML = '<h1>Game</h1>';
+        // Bouton rejouer
+        document.getElementById('game').innerHTML += '<button id="reset">' + buttonText + '</button>';
+        document.getElementById('reset').addEventListener('click', function () {
+            // Enleve le bouton et le titre
+            document.getElementById('reset').remove();
 
-        socket.emit('begin', getIdFromUrl());
-    });
+            socket.emit('begin', getIdFromUrl());
+        });
+    }, 3000);
 });
