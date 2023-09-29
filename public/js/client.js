@@ -165,7 +165,7 @@ socket.on('play', function (idSocket, username) {
 
 // writing
 socket.on('writing', function (text) {
-    if (text == '') {
+    if (text == '' || text == null) {
         text = ' ';
     }
     document.querySelector('#write').innerHTML = text;
