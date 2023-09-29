@@ -228,6 +228,21 @@ class Game {
     end(io) {
         this.hasBegun = false;
         io.to(this.idRoom).emit('end game', this.players[0].username);
+
+        // Signale au host que la partie est terminée
+        let socketHost = null;
+        console.log(io.sockets.length);
+        for(let i = 0; i < io.sockets.length; i++) {
+            console.log(io.sockets[i].id);
+            console.log(this.host);
+            if(io.sockets[i].id == this.host) {
+                socketHost = io.sockets[i];
+            }
+        }
+
+        socketHost.join("roomTemp");
+        io.to("roomTemp").emit('host');
+        socketHost.leave("roomTemp");
     }
 }
 

@@ -57,6 +57,7 @@ socket.on('id', function (id) {
 });
 
 socket.on('host', function () {
+    console.log('host');
     let game = document.querySelector('#game');
     game.innerHTML = '<h1 class="title">' + titleText + '</h1>';
     game.innerHTML += '<button id="begin">' + buttonText + '</button>';
@@ -158,15 +159,13 @@ socket.on('end game', function (winner) {
 
     setTimeout(function () {
         document.querySelector('#winner').remove();
-        document.getElementById('game').innerHTML = '<h1 class="title">' + titleText + '</h1>';
-
-        // Bouton rejouer
-        document.getElementById('game').innerHTML += '<button id="reset">' + buttonText + '</button>';
-        document.getElementById('reset').addEventListener('click', function () {
-            // Enleve le bouton et le titre
-            document.getElementById('reset').remove();
-
-            socket.emit('begin', getIdFromUrl());
-        });
+        // document.getElementById('game').innerHTML = '<h1 class="title">' + titleText + '</h1>';          
+        // // Bouton rejouer         
+        // document.getElementById('game').innerHTML += '<button id="reset">' + buttonText + '</button>';         
+        // document.getElementById('reset').addEventListener('click', function () {             
+        //     // Enleve le bouton et le titre             
+        //     document.getElementById('reset').remove();              
+        //     socket.emit('begin', getIdFromUrl());         
+        // });
     }, 3000);
 });
