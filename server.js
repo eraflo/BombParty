@@ -61,7 +61,8 @@ io.on('connection', function(socket){
         // Test si le joueur est host
         if(game != null && game.players.length == 1 && game.host == null){
             game.host = socket.id;
-            io.to(game.idRoom).emit('host');
+            socket.join("host"+game.host);
+            io.to("host"+game.host).emit('host');
         }
     });
 

@@ -31,6 +31,17 @@ if (joinRoom) {
     });
 }
 
+// Join Room touche enter
+if(document.getElementById('idRoomJoin')){
+    document.getElementById('idRoomJoin').addEventListener('keydown', function(event){
+        if(event.key == 'Enter'){
+            let id = document.getElementById('idRoomJoin').value;
+            deleteCookie('idTemp');
+            socket.emit('connect to game', id);
+        }
+    });
+}
+
 // Join game
 if (joinButton) {
     joinButton.addEventListener('click', function () {
@@ -46,6 +57,26 @@ if (joinButton) {
 
         // emit event pour savoir si est host
         socket.emit('is host', getIdFromUrl());
+    });
+}
+
+// Join game touche enter
+if(document.getElementById('username')){
+    document.getElementById('username').addEventListener('keydown', function(event){
+        if(event.key == 'Enter'){
+            // récupérer l'id via l'url
+            socket.emit('join the game', username.value, getIdFromUrl());
+            document.getElementById('usernames').remove();
+
+            let header = document.querySelector('header');
+            header.innerHTML = '<div id="left"><h1><span>C</span>a <span>E</span>xplose <span>S</span>on <span>I</span>ngé</h1><p>Un BombParty spécial CESI</div><div id="right"><h1 id="room">In room </h1></div>';
+
+            let main = document.querySelector('#main');
+            main.innerHTML = '<section id="players"></section><section id="game"></section>';
+
+            // emit event pour savoir si est host
+            socket.emit('is host', getIdFromUrl());
+        }
     });
 }
 
@@ -82,9 +113,6 @@ socket.on('update users', function (users) {
 socket.on('remove begin button', function () {
     document.querySelector('.title').remove();
     document.querySelector('#begin').remove();
-    if (document.querySelector('#reset') != null) {
-        document.querySelector('#reset').remove();
-    }
 });
 
 socket.on('show letters', function (letters) {
@@ -113,7 +141,9 @@ socket.on('play', function (idSocket, username) {
 
     if (idSocket == socket.id) {
         // input pour saisir un mot avec les lettres
-        document.querySelector('#game').innerHTML += '<section id="input"><h1>Enter your word</h1><div class="form"><input type="text" id="word"><button id="submit">Submit</button></div></section>';
+        document.querySelector('#game').innerHTML += '<section id="input"><h1>Enter your word</h1><div class="form"><input type="text" id="word" autofocus><button id="submit">Submit</button></div></section>';
+        
+        document.querySelector('#word').focus();
         document.querySelector('#word').addEventListener('input', function () {
             socket.emit('writing', getIdFromUrl(), document.querySelector('#word').value);
         });
@@ -135,6 +165,9 @@ socket.on('play', function (idSocket, username) {
 
 // writing
 socket.on('writing', function (text) {
+    if (text == '') {
+        text = ' ';
+    }
     document.querySelector('#write').innerHTML = text;
 });
 
@@ -159,13 +192,5 @@ socket.on('end game', function (winner) {
 
     setTimeout(function () {
         document.querySelector('#winner').remove();
-        // document.getElementById('game').innerHTML = '<h1 class="title">' + titleText + '</h1>';          
-        // // Bouton rejouer         
-        // document.getElementById('game').innerHTML += '<button id="reset">' + buttonText + '</button>';         
-        // document.getElementById('reset').addEventListener('click', function () {             
-        //     // Enleve le bouton et le titre             
-        //     document.getElementById('reset').remove();              
-        //     socket.emit('begin', getIdFromUrl());         
-        // });
     }, 3000);
 });
