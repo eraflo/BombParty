@@ -36,5 +36,6 @@ export const deleteCookie = (cname) => {
 
 export const getIdFromUrl = () => {
     let url = window.location.href;
-    return url.split('=')[1];
+    let urlSplit = url.split('/');
+    return urlSplit[urlSplit.length-1];
 }

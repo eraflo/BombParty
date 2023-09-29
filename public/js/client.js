@@ -111,8 +111,10 @@ socket.on('update users', function (users) {
 });
 
 socket.on('remove begin button', function () {
-    document.querySelector('.title').remove();
-    document.querySelector('#begin').remove();
+    if(document.querySelector('#begin'))
+        document.querySelector('#begin').remove();
+    if(document.querySelector('.title'))
+        document.querySelector('.title').remove();
 });
 
 socket.on('show letters', function (letters) {
@@ -165,10 +167,12 @@ socket.on('play', function (idSocket, username) {
 
 // writing
 socket.on('writing', function (text) {
-    if (text == '' || text == null) {
+    if (text == '' || text == null || text == undefined) {
         text = ' ';
     }
-    document.querySelector('#write').innerHTML = text;
+    if(document.querySelector('#write')){
+        document.querySelector('#write').innerHTML = text;
+    }
 });
 
 socket.on('invalid word', function (word, idSocket) {

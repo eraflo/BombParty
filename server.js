@@ -31,11 +31,17 @@ function getGame(id){
 }
 
 // Static files
-app.use(express.static('public'));
+app.use('/', express.static(__dirname + '/public'));
+app.use('/game', express.static(__dirname + '/public'));
 
 // Routes
 app.get('/', function(req, res){
     res.sendFile(__dirname + '/public/index.html');
+});
+
+app.get('/game/:id', function(req, res){
+    const gameId = req.params.id;
+    res.sendFile(__dirname + '/public/game.html');
 });
 
 
@@ -50,7 +56,7 @@ io.on('connection', function(socket){
         if(!getRoom(id)){
             rooms.push({id: id, game: new Game(id, new Bomb())});
         }
-        io.to(socket.id).emit('redirect', '/game.html?id=' + id);
+        io.to(socket.id).emit('redirect', '/game/' + id);
     });
 
     // Test si le joueur est host
